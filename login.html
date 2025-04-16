@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Selection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem; /* Increased font size for the header */
+      margin-bottom: 30px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .player-item input {
+      transform: scale(2.5); /* Increased checkbox size */
+    }
+
+    .player-item label {
+      font-size: 2rem; /* Increased font size for player names */
+    }
+
+    .new-player {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #fff;
+    }
+
+    input[type="text"] {
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1.5rem;
+      width: 400px;
+    }
+
+    button {
+      font-size: 1.5rem;
+      padding: 15px 30px;
+      background-color: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Player Selection</h1>
+  <form id="playerSelectionForm">
+    <!-- Existing Players -->
+    <div class="player-list">
+      <div class="player-item">
+        <input type="checkbox" id="mickey" value="Mickey">
+        <label for="mickey">Mickey</label>
+      </div>
+      <div class="player-item">
+        <input type="checkbox" id="karl" value="Karl">
+        <label for="karl">Karl</label>
+      </div>
+      <div class="player-item">
+        <input type="checkbox" id="nooch" value="Nooch">
+        <label for="nooch">Nooch</label>
+      </div>
+      <div class="player-item">
+        <input type="checkbox" id="guido" value="Guido">
+        <label for="guido">Guido</label>
+      </div>
+    </div>
+
+    <!-- Add New Player -->
+    <div class="new-player">
+      <h2>Add a Guest/New Player</h2>
+      <input type="text" id="newPlayerName" placeholder="Enter name for new player">
+    </div>
+
+    <!-- Start Game Button -->
+    <button type="submit">Start Game</button>
+  </form>
+
+  <script>
+    const players = [
+      { name: "Mickey", avatar: "avatars/mickey.png" },
+      { name: "Karl", avatar: "avatars/karl.png" },
+      { name: "Nooch", avatar: "avatars/nooch.png" },
+      { name: "Guido", avatar: "avatars/guido.png" }
+    ];
+
+    const guestAvatars = ["avatars/guest1.png", "avatars/guest2.png"];
+    let guestAvatarIndex = 0;
+
+    document.getElementById("playerSelectionForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const selectedPlayers = [];
+      const checkboxes = document.querySelectorAll(".player-list input[type='checkbox']:checked");
+
+      // Collect selected players
+      checkboxes.forEach(checkbox => {
+        const player = players.find(p => p.name === checkbox.value);
+        if (player) {
+          selectedPlayers.push(player);
+        }
+      });
+
+      // Add new player if provided
+      const newPlayerName = document.getElementById("newPlayerName").value.trim();
+      if (newPlayerName) {
+        const newPlayer = {
+          name: newPlayerName,
+          avatar: guestAvatars[guestAvatarIndex]
+        };
+        selectedPlayers.push(newPlayer);
+
+        // Cycle through guest avatars
+        guestAvatarIndex = (guestAvatarIndex + 1) % guestAvatars.length;
+      }
+
+      // Validate player count
+      if (selectedPlayers.length < 2) {
+        alert("You must select at least two players to start the game!");
+        return;
+      }
+
+      // Save selected players (e.g., in localStorage or pass to next page)
+      localStorage.setItem("selectedPlayers", JSON.stringify(selectedPlayers));
+
+      // Redirect to setup.html
+      window.location.href = "setup.html";
+    });
+  </script>
+</body>
+</html>

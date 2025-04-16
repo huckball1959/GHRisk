@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Setup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem; /* Increased font size for the header */
+      margin-bottom: 30px;
+    }
+
+    p {
+      margin-bottom: 30px;
+      font-size: 1.5rem; /* Increased font size for the paragraph */
+    }
+
+    .setup-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px; /* Increased gap between player items */
+    }
+
+    .player-order {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 2rem; /* Increased font size for player names */
+    }
+
+    select {
+      font-size: 1.5rem; /* Increased font size for dropdowns */
+      padding: 10px;
+    }
+
+    button {
+      font-size: 1.5rem;
+      padding: 15px 30px;
+      background-color: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Table Setup</h1>
+  <p>Set the table order for players. Cards will be dealt after this step.</p>
+
+  <div class="setup-container" id="setupContainer"></div>
+
+  <button id="proceedButton">Proceed to Gameboard</button>
+
+  <script>
+    // Load selected players from localStorage
+    const selectedPlayers = JSON.parse(localStorage.getItem("selectedPlayers")) || [];
+
+    const setupContainer = document.getElementById("setupContainer");
+    const proceedButton = document.getElementById("proceedButton");
+
+    // Populate dropdowns for table order
+    function populateTableOrder() {
+      const dropdownOptions = Array.from({ length: selectedPlayers.length }, (_, i) => i + 1); // Create options [1, 2, 3, ...]
+
+      selectedPlayers.forEach((player, index) => {
+        const playerDiv = document.createElement("div");
+        playerDiv.className = "player-order";
+
+        const playerLabel = document.createElement("span");
+        playerLabel.textContent = player.name;
+
+        const orderDropdown = document.createElement("select");
+        orderDropdown.id = `playerOrder-${index}`;
+
+        // Add options to dropdown
+        dropdownOptions.forEach(option => {
+          const optionElement = document.createElement("option");
+          optionElement.value = option;
+          optionElement.textContent = option;
+          orderDropdown.appendChild(optionElement);
+        });
+
+        playerDiv.appendChild(playerLabel);
+        playerDiv.appendChild(orderDropdown);
+        setupContainer.appendChild(playerDiv);
+      });
+    }
+
+    // Validate and save table order
+    function validateAndSaveTableOrder() {
+      const tableOrder = [];
+      const usedOrderNumbers = new Set();
+
+      // Collect and validate table order
+      selectedPlayers.forEach((player, index) => {
+        const orderDropdown = document.getElementById(`playerOrder-${index}`);
+        const selectedOrder = parseInt(orderDropdown.value, 10);
+
+        if (usedOrderNumbers.has(selectedOrder)) {
+          alert("Each player must have a unique table order!");
+          return;
+        }
+
+        usedOrderNumbers.add(selectedOrder);
+        tableOrder.push({ name: player.name, order: selectedOrder });
+      });
+
+      // Ensure all players have an order
+      if (tableOrder.length !== selectedPlayers.length) {
+        return; // Validation failed
+      }
+
+      // Save table order and proceed
+      tableOrder.sort((a, b) => a.order - b.order); // Sort by order
+      localStorage.setItem("tableOrder", JSON.stringify(tableOrder));
+      window.location.href = "gameboard.html";
+    }
+
+    // Populate table order on load
+    populateTableOrder();
+
+    // Set up proceed button
+    proceedButton.addEventListener("click", validateAndSaveTableOrder);
+  </script>
+</body>
+</html>

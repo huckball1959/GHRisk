@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Risk Map Game Board</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #000; /* Black background for the whole page */
+      box-sizing: border-box;
+      display: flex;
+      align-items: center; /* Center the canvas vertically */
+      justify-content: center; /* Center the canvas horizontally */
+      height: 100vh; /* Full height of the viewport */
+      overflow: hidden; /* Prevent scrolling */
+    }
+
+    #canvas-container {
+      width: 98vw; /* Scale to 98% of the viewport width */
+      height: calc(98vw * 9 / 16); /* Maintain a 16:9 aspect ratio */
+      max-height: 98vh; /* Ensure it doesn't exceed 98% of the viewport height */
+      max-width: calc(98vh * 16 / 9); /* Ensure it doesn't exceed the viewport width */
+      display: flex;
+      flex-direction: row;
+      border: 1px solid #ccc; /* Optional: Add a border for visual clarity */
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for effect */
+    }
+
+    #map-container {
+      flex: 0.7; /* Map takes 70% of the canvas width */
+      height: 100%; /* Full height of the canvas */
+      position: relative;
+      background-color: #000; /* Set the background color of the map container to black */
+    }
+
+    #risk-map {
+      width: 100%; /* Scale to the width of the container */
+      height: 100%; /* Scale to the height of the container */
+    }
+
+    #panel-container {
+      flex: 0.3; /* Panel container takes 30% of the canvas width */
+      height: 100%; /* Full height of the canvas */
+      display: flex;
+      flex-direction: column; /* Stack the two panels vertically */
+      background-color: #fff;
+      border-left: 1px solid #ccc; /* Separate it visually */
+      box-sizing: border-box;
+    }
+
+    .panel {
+      flex: 1; /* Each panel takes up 50% of the panel-container height */
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5vw; /* Placeholder styling for now */
+      background-color: #fff; /* Panel background color */
+    }
+
+    .panel:not(:last-child) {
+      margin-bottom: 5px; /* Add a small black gap between the two panels */
+    }
+
+    .gap {
+      background-color: #000; /* Black gap color */
+      height: 5px; /* Height of the black gap */
+      width: 100%; /* Full width of the panel container */
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container">
+    <div id="map-container">
+      <object id="risk-map" type="image/svg+xml" data="map.svg"></object>
+    </div>
+    <div id="panel-container">
+      <div class="panel" id="panel-1">Upper Panel</div>
+      <div class="gap"></div>
+      <div class="panel" id="panel-2">Lower Panel</div>
+    </div>
+  </div>
+
+  <script>
+    const mapObject = document.getElementById("risk-map");
+    let lastClickedCircle = null;
+
+    mapObject.addEventListener("load", () => {
+      try {
+        const svgDoc = mapObject.contentDocument;
+        if (!svgDoc) throw new Error("SVG document not loaded");
+
+        // Inject styles into the SVG
+        const styleElement = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+        styleElement.textContent = `
+          circle {
+            cursor: pointer;
+            transition: fill 0.3s;
+          }
+          circle:hover {
+            fill: #ff0000;
+          }
+          .highlighted {
+            fill: #00ff00 !important;
+          }
+        `;
+        svgDoc.querySelector("svg").appendChild(styleElement);
+
+        // Add click event listeners to circles
+        const circles = svgDoc.querySelectorAll("circle");
+        circles.forEach(circle => {
+          circle.addEventListener("click", () => {
+            // Remove highlight from previously clicked circle
+            if (lastClickedCircle) {
+              lastClickedCircle.classList.remove("highlighted");
+            }
+            // Highlight the clicked circle
+            circle.classList.add("highlighted");
+            lastClickedCircle = circle;
+
+            // Log to console for debugging
+            const titleElement = circle.querySelector("title");
+            const territoryName = titleElement ? titleElement.textContent : "Unknown";
+            console.log(`Clicked: ${territoryName}`);
+          });
+        });
+
+      } catch (error) {
+        console.error("Error loading SVG:", error);
+      }
+    });
+  </script>
+</body>
+</html>
