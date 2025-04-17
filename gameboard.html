@@ -84,54 +84,35 @@
     </div>
   </div>
 
+  <!-- JavaScript for maintaining clickability without unnecessary hover effects -->
   <script>
     const mapObject = document.getElementById("risk-map");
-    let lastClickedCircle = null;
 
     mapObject.addEventListener("load", () => {
       try {
         const svgDoc = mapObject.contentDocument;
         if (!svgDoc) throw new Error("SVG document not loaded");
 
-        // Inject styles into the SVG
-        const styleElement = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
-        styleElement.textContent = `
-          circle {
-            cursor: pointer;
-            transition: fill 0.3s;
-          }
-          circle:hover {
-            fill: #ff0000;
-          }
-          .highlighted {
-            fill: #00ff00 !important;
-          }
-        `;
-        svgDoc.querySelector("svg").appendChild(styleElement);
-
         // Add click event listeners to circles
         const circles = svgDoc.querySelectorAll("circle");
         circles.forEach(circle => {
           circle.addEventListener("click", () => {
-            // Remove highlight from previously clicked circle
-            if (lastClickedCircle) {
-              lastClickedCircle.classList.remove("highlighted");
-            }
-            // Highlight the clicked circle
-            circle.classList.add("highlighted");
-            lastClickedCircle = circle;
-
-            // Log to console for debugging
+            // Placeholder: Log the clicked territory name for now
             const titleElement = circle.querySelector("title");
             const territoryName = titleElement ? titleElement.textContent : "Unknown";
             console.log(`Clicked: ${territoryName}`);
+
+            // Future gameplay logic can be added here
           });
         });
-
       } catch (error) {
         console.error("Error loading SVG:", error);
       }
     });
   </script>
+
+  <!-- External scripts -->
+  <script src="game-overlay.js"></script>
+  <script src="updateGameboard.js"></script>
 </body>
 </html>

@@ -3,59 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Game Setup</title>
+  <title>Setup Game</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
       text-align: center;
+      padding: 20px;
     }
 
     h1 {
-      font-size: 3rem; /* Increased font size for the header */
-      margin-bottom: 30px;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
     }
 
     p {
+      font-size: 1.5rem;
       margin-bottom: 30px;
-      font-size: 1.5rem; /* Increased font size for the paragraph */
-    }
-
-    .setup-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 25px; /* Increased gap between player items */
-    }
-
-    .player-order {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 2rem; /* Increased font size for player names */
-    }
-
-    select {
-      font-size: 1.5rem; /* Increased font size for dropdowns */
-      padding: 10px;
     }
 
     button {
       font-size: 1.5rem;
-      padding: 15px 30px;
+      padding: 10px 20px;
       background-color: #007BFF;
-      color: #fff;
+      color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      transition: background-color 0.3s;
     }
 
     button:hover {
@@ -64,83 +37,77 @@
   </style>
 </head>
 <body>
-  <h1>Table Setup</h1>
-  <p>Set the table order for players. Cards will be dealt after this step.</p>
-
-  <div class="setup-container" id="setupContainer"></div>
-
-  <button id="proceedButton">Proceed to Gameboard</button>
+  <h1>Game Setup</h1>
+  <p>Preparing the game. Please wait...</p>
+  <button id="startGameButton" style="display: none;">Proceed to Gameboard</button>
 
   <script>
-    // Load selected players from localStorage
-    const selectedPlayers = JSON.parse(localStorage.getItem("selectedPlayers")) || [];
+    // Placeholder for game state
+    const gameState = {
+      players: JSON.parse(localStorage.getItem("selectedPlayers")) || [],
+      territories: {},
+      placementOrder: [],
+      currentTurnIndex: 0,
+      round: 1,
+    };
 
-    const setupContainer = document.getElementById("setupContainer");
-    const proceedButton = document.getElementById("proceedButton");
+    // List of territories (replace with the actual territories from map.svg)
+    const territories = [
+      "Alaska", "NorthwestTerritory", "Greenland", "Alberta", "Ontario", "Quebec",
+      "WesternUnitedStates", "EasternUnitedStates", "CentralAmerica", "Venezuela",
+      "Peru", "Brazil", "Argentina", "NorthAfrica", "Egypt", "EastAfrica",
+      "Congo", "SouthAfrica", "Madagascar", "Iceland", "Scandinavia", "Ukraine",
+      "GreatBritain", "NorthernEurope", "WesternEurope", "SouthernEurope",
+      "Afghanistan", "Ural", "Siberia", "Yakutsk", "Kamchatka", "Irkutsk",
+      "Mongolia", "Japan", "China", "India", "Siam", "Indonesia", "NewGuinea",
+      "WesternAustralia", "EasternAustralia"
+    ];
 
-    // Populate dropdowns for table order
-    function populateTableOrder() {
-      const dropdownOptions = Array.from({ length: selectedPlayers.length }, (_, i) => i + 1); // Create options [1, 2, 3, ...]
+    /**
+     * Randomly assigns territories to players.
+     */
+    function assignTerritories() {
+      const shuffledTerritories = territories.sort(() => Math.random() - 0.5);
+      const numPlayers = gameState.players.length;
 
-      selectedPlayers.forEach((player, index) => {
-        const playerDiv = document.createElement("div");
-        playerDiv.className = "player-order";
-
-        const playerLabel = document.createElement("span");
-        playerLabel.textContent = player.name;
-
-        const orderDropdown = document.createElement("select");
-        orderDropdown.id = `playerOrder-${index}`;
-
-        // Add options to dropdown
-        dropdownOptions.forEach(option => {
-          const optionElement = document.createElement("option");
-          optionElement.value = option;
-          optionElement.textContent = option;
-          orderDropdown.appendChild(optionElement);
-        });
-
-        playerDiv.appendChild(playerLabel);
-        playerDiv.appendChild(orderDropdown);
-        setupContainer.appendChild(playerDiv);
-      });
-    }
-
-    // Validate and save table order
-    function validateAndSaveTableOrder() {
-      const tableOrder = [];
-      const usedOrderNumbers = new Set();
-
-      // Collect and validate table order
-      selectedPlayers.forEach((player, index) => {
-        const orderDropdown = document.getElementById(`playerOrder-${index}`);
-        const selectedOrder = parseInt(orderDropdown.value, 10);
-
-        if (usedOrderNumbers.has(selectedOrder)) {
-          alert("Each player must have a unique table order!");
-          return;
+      shuffledTerritories.forEach((territory, index) => {
+        const playerIndex = index % numPlayers;
+        if (!gameState.territories[territory]) {
+          gameState.territories[territory] = {
+            owner: gameState.players[playerIndex].name,
+            armies: 1, // Start with 1 army
+          };
         }
-
-        usedOrderNumbers.add(selectedOrder);
-        tableOrder.push({ name: player.name, order: selectedOrder });
       });
-
-      // Ensure all players have an order
-      if (tableOrder.length !== selectedPlayers.length) {
-        return; // Validation failed
-      }
-
-      // Save table order and proceed
-      tableOrder.sort((a, b) => a.order - b.order); // Sort by order
-      localStorage.setItem("tableOrder", JSON.stringify(tableOrder));
-      window.location.href = "gameboard.html";
     }
 
-    // Populate table order on load
-    populateTableOrder();
+    /**
+     * Randomizes the order of players for army placement.
+     */
+    function determinePlacementOrder() {
+      const shuffledPlayers = gameState.players.sort(() => Math.random() - 0.5);
+      gameState.placementOrder = shuffledPlayers.map(player => player.name);
+    }
 
-    // Set up proceed button
-    proceedButton.addEventListener("click", validateAndSaveTableOrder);
+    /**
+     * Initializes the game state for army placement phase.
+     */
+    function initializeGame() {
+      assignTerritories();
+      determinePlacementOrder();
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      document.getElementById("startGameButton").style.display = "inline-block";
+    }
+
+    // Start game setup
+    window.onload = function () {
+      initializeGame();
+    };
+
+    // Redirect to gameboard.html
+    document.getElementById("startGameButton").addEventListener("click", () => {
+      window.location.href = "gameboard.html";
+    });
   </script>
 </body>
 </html>

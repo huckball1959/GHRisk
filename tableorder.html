@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set Table Order</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    .player-order {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    label {
+      font-size: 1.5rem;
+    }
+
+    select {
+      padding: 10px;
+      font-size: 1.2rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    #rollButton, #nextButton {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1.5rem;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #rollButton:hover, #nextButton:hover {
+      background-color: #0056b3;
+    }
+
+    #firstCard {
+      margin-top: 20px;
+      font-size: 1.8rem;
+      text-align: center;
+      color: green;
+    }
+
+    #nextButton {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Set Table Order</h1>
+  <div class="player-order" id="playerOrderContainer">
+    <!-- Players with dropdowns will be dynamically added here -->
+  </div>
+
+  <button id="rollButton">Roll to See Who Gets First Card</button>
+  <div id="firstCard"></div>
+  <button id="nextButton">Next</button>
+
+  <script>
+    const playerOrderContainer = document.getElementById('playerOrderContainer');
+    const rollButton = document.getElementById('rollButton');
+    const nextButton = document.getElementById('nextButton');
+    const firstCardDiv = document.getElementById('firstCard');
+
+    // Retrieve players from LocalStorage
+    const players = JSON.parse(localStorage.getItem('selectedPlayers')) || [];
+    if (players.length === 0) {
+      alert('No players found! Redirecting back to player selection.');
+      window.location.href = 'login.html';
+    }
+
+    // Populate the page with players and dropdowns
+    players.forEach((player, index) => {
+      const playerItem = document.createElement('div');
+      playerItem.className = 'player-item';
+
+      const label = document.createElement('label');
+      label.textContent = player.name;
+
+      const select = document.createElement('select');
+      select.id = `playerOrder_${index}`;
+      select.innerHTML = '<option value="">Select Order</option>';
+      for (let i = 1; i <= players.length; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        select.appendChild(option);
+      }
+
+      playerItem.appendChild(label);
+      playerItem.appendChild(select);
+      playerOrderContainer.appendChild(playerItem);
+    });
+
+    // Roll for first player
+    rollButton.addEventListener('click', () => {
+      // Validate all dropdowns are filled and unique
+      const selectedOrders = [];
+      for (let i = 0; i < players.length; i++) {
+        const select = document.getElementById(`playerOrder_${i}`);
+        const order = select.value;
+        if (!order) {
+          alert('Please assign an order to all players.');
+          return;
+        }
+        if (selectedOrders.includes(order)) {
+          alert('Duplicate orders found! Please ensure each player has a unique order.');
+          return;
+        }
+        selectedOrders.push(order);
+      }
+
+      // Save the table order to LocalStorage
+      const tableOrder = players.map((player, index) => ({
+        name: player.name,
+        order: parseInt(document.getElementById(`playerOrder_${index}`).value),
+      }));
+      localStorage.setItem('tableOrder', JSON.stringify(tableOrder));
+
+      // Randomly select the first player
+      const randomIndex = Math.floor(Math.random() * players.length);
+      const firstPlayer = tableOrder.find(player => player.order === randomIndex + 1);
+      firstCardDiv.textContent = `First Card: ${firstPlayer.name}`; // Display first card
+      rollButton.disabled = true; // Disable the roll button
+      nextButton.style.display = 'block'; // Show the Next button
+    });
+
+    // Proceed to the next step
+    nextButton.addEventListener('click', () => {
+      window.location.href = 'gameboard.html'; // Redirect to the game board
+    });
+  </script>
+</body>
+</html>

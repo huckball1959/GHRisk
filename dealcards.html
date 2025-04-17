@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deal Cards</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    #status {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      color: green;
+    }
+
+    button {
+      font-size: 1.5rem;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dealing Cards</h1>
+  <p id="status">Assigning territories to players...</p>
+  <button id="continueButton" style="display: none;">Continue to Gameboard</button>
+
+  <script>
+    // Predefined player colors
+    const predefinedColors = {
+      "Guido": "blue",
+      "Karl": "pink",
+      "Mickey": "red",
+      "Nooch": "black"
+    };
+
+    // Retrieve necessary data from LocalStorage
+    const players = JSON.parse(localStorage.getItem("selectedPlayers")) || [];
+    const tableOrder = JSON.parse(localStorage.getItem("tableOrder")) || [];
+    const firstCardPlayer = localStorage.getItem("firstCardPlayer");
+
+    if (players.length === 0 || tableOrder.length === 0) {
+      alert("Missing player or table order data! Redirecting to player selection.");
+      window.location.href = "login.html";
+    }
+
+    // Ensure player colors are established
+    players.forEach(player => {
+      if (!player.color) {
+        player.color = predefinedColors[player.name] || "gray"; // Fallback to gray if no predefined color
+      }
+    });
+    localStorage.setItem("selectedPlayers", JSON.stringify(players));
+
+    // Function to assign territories
+    function assignTerritories() {
+      const totalTerritories = 42;
+      const territoryAssignments = [];
+      let currentPlayerIndex = tableOrder.findIndex(player => player.name === firstCardPlayer);
+
+      // If no first card player, start with the first in table order
+      if (currentPlayerIndex === -1) {
+        currentPlayerIndex = 0;
+      }
+
+      // Loop through territories and assign them to players
+      for (let i = 0; i < totalTerritories; i++) {
+        const currentPlayer = tableOrder[currentPlayerIndex];
+        territoryAssignments.push({
+          territory: i + 1,
+          player: currentPlayer.name,
+          color: players.find(player => player.name === currentPlayer.name).color,
+          label: "001"
+        });
+
+        // Move to the next player in clockwise order
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      }
+
+      return territoryAssignments;
+    }
+
+    // Assign territories and save to LocalStorage
+    const territoryAssignments = assignTerritories();
+    localStorage.setItem("territoryAssignments", JSON.stringify(territoryAssignments));
+
+    // Simulate dealing process
+    const statusElement = document.getElementById("status");
+    const continueButton = document.getElementById("continueButton");
+
+    setTimeout(() => {
+      statusElement.textContent = "Territories have been assigned!";
+      continueButton.style.display = "block";
+    }, 2000); // Simulate a delay for dealing cards
+
+    // Redirect to the gameboard
+    continueButton.addEventListener("click", () => {
+      window.location.href = "gameboard.html";
+    });
+  </script>
+</body>
+</html>

@@ -18,8 +18,18 @@
       text-align: center;
     }
 
+    #loadGameContainer {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
     h1 {
-      font-size: 3rem; /* Increased font size for the header */
+      font-size: 2.5rem;
       margin-bottom: 30px;
     }
 
@@ -27,42 +37,31 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 30px;
+      gap: 25px;
     }
 
-    .player-list {
+    .player-list, .new-player {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 15px;
     }
 
     .player-item {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 15px;
     }
 
     .player-item input {
-      transform: scale(2.5); /* Increased checkbox size */
+      transform: scale(2);
     }
 
     .player-item label {
-      font-size: 2rem; /* Increased font size for player names */
-    }
-
-    .new-player {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-top: 30px;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background-color: #fff;
+      font-size: 2rem;
     }
 
     input[type="text"] {
-      padding: 15px;
+      padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 1.5rem;
@@ -71,7 +70,7 @@
 
     button {
       font-size: 1.5rem;
-      padding: 15px 30px;
+      padding: 10px 20px;
       background-color: #007BFF;
       color: #fff;
       border: none;
@@ -83,12 +82,29 @@
     button:hover {
       background-color: #0056b3;
     }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    label {
+      font-size: 1.5rem;
+      color: #007BFF;
+      cursor: pointer;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
+  <!-- Load Game Button -->
+  <div id="loadGameContainer">
+    <label for="loadGameFileInput">Load a Saved Game</label>
+    <input type="file" id="loadGameFileInput" accept=".json">
+    <button id="loadGameButton">Load Game</button>
+  </div>
+
   <h1>Player Selection</h1>
   <form id="playerSelectionForm">
-    <!-- Existing Players -->
     <div class="player-list">
       <div class="player-item">
         <input type="checkbox" id="mickey" value="Mickey">
@@ -108,14 +124,12 @@
       </div>
     </div>
 
-    <!-- Add New Player -->
     <div class="new-player">
-      <h2>Add a Guest/New Player</h2>
+      <h2 style="font-size: 2rem;">Add a Guest/New Player</h2>
       <input type="text" id="newPlayerName" placeholder="Enter name for new player">
     </div>
 
-    <!-- Start Game Button -->
-    <button type="submit">Start Game</button>
+    <button type="submit">Next</button>
   </form>
 
   <script>
@@ -162,11 +176,38 @@
         return;
       }
 
-      // Save selected players (e.g., in localStorage or pass to next page)
+      // Save selected players to LocalStorage
       localStorage.setItem("selectedPlayers", JSON.stringify(selectedPlayers));
 
-      // Redirect to setup.html
-      window.location.href = "setup.html";
+      // Redirect to tableorder.html
+      window.location.href = "tableorder.html";
+    });
+
+    // Load Game Functionality
+    const loadGameFileInput = document.getElementById("loadGameFileInput");
+    const loadGameButton = document.getElementById("loadGameButton");
+
+    loadGameButton.addEventListener("click", () => {
+      loadGameFileInput.click(); // Trigger file input click
+    });
+
+    loadGameFileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const gameState = JSON.parse(reader.result);
+          localStorage.setItem("gameState", JSON.stringify(gameState)); // Save game state to LocalStorage
+          alert("Game loaded successfully!");
+          window.location.href = "setup.html"; // Redirect to game setup
+        } catch (error) {
+          console.error("Error loading game:", error);
+          alert("Failed to load game. Please ensure the file is a valid save file.");
+        }
+      };
+      reader.readAsText(file);
     });
   </script>
 </body>
