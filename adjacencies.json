@@ -1,0 +1,56 @@
+{
+  "North America": {
+    "Alaska": ["Kamchatka", "Northwest Territory", "Alberta"],
+    "Alberta": ["Alaska", "Northwest Territory", "Ontario", "Western United States"],
+    "Central America": ["Western United States", "Venezuela"],
+    "Eastern United States": ["Ontario", "Quebec", "Western United States"],
+    "Greenland": ["Northwest Territory", "Ontario", "Quebec", "Iceland"],
+    "Northwest Territory": ["Alaska", "Alberta", "Ontario", "Greenland"],
+    "Ontario": ["Northwest Territory", "Alberta", "Western United States", "Eastern United States", "Quebec", "Greenland"],
+    "Quebec": ["Ontario", "Eastern United States", "Greenland"],
+    "Western United States": ["Alberta", "Ontario", "Eastern United States", "Central America"]
+  },
+  "South America": {
+    "Argentina": ["Brazil", "Peru"],
+    "Brazil": ["Venezuela", "Peru", "Argentina", "North Africa"],
+    "Peru": ["Venezuela", "Brazil", "Argentina"],
+    "Venezuela": ["Central America", "Peru", "Brazil"]
+  },
+  "Europe": {
+    "Great Britain": ["Iceland", "Scandinavia", "Northern Europe", "Western Europe"],
+    "Iceland": ["Greenland", "Scandinavia", "Great Britain"],
+    "Northern Europe": ["Scandinavia", "Great Britain", "Western Europe", "Southern Europe", "Ukraine"],
+    "Scandinavia": ["Iceland", "Great Britain", "Northern Europe", "Ukraine"],
+    "Southern Europe": ["Western Europe", "Northern Europe", "Ukraine", "Egypt", "North Africa", "Middle East"],
+    "Ukraine": ["Scandinavia", "Northern Europe", "Southern Europe", "Afghanistan", "Ural", "Middle East"],
+    "Western Europe": ["Great Britain", "Northern Europe", "Southern Europe", "North Africa"]
+  },
+  "Africa": {
+    "Congo": ["East Africa", "North Africa", "South Africa"],
+    "East Africa": ["Egypt", "North Africa", "Congo", "South Africa", "Madagascar", "Middle East"],
+    "Egypt": ["Southern Europe", "North Africa", "East Africa", "Middle East"],
+    "Madagascar": ["East Africa", "South Africa"],
+    "North Africa": ["Brazil", "Western Europe", "Southern Europe", "Egypt", "East Africa", "Congo"],
+    "South Africa": ["Congo", "East Africa", "Madagascar"]
+  },
+  "Asia": {
+    "Afghanistan": ["Ukraine", "Ural", "China", "India", "Middle East"],
+    "China": ["Afghanistan", "Ural", "Siberia", "Mongolia", "Southeast Asia", "India"],
+    "India": ["Afghanistan", "Middle East", "China", "Southeast Asia"],
+    "Irkutsk": ["Siberia", "Mongolia", "Kamchatka", "Yakutsk"],
+    "Japan": ["Mongolia", "Kamchatka"],
+    "Kamchatka": ["Japan", "Mongolia", "Irkutsk", "Yakutsk", "Alaska"],
+    "Middle East": ["Ukraine", "Southern Europe", "Egypt", "East Africa", "Afghanistan", "India"],
+    "Mongolia": ["China", "Siberia", "Irkutsk", "Kamchatka", "Japan"],
+    "Southeast Asia": ["India", "China", "Indonesia"],
+    "Siberia": ["Ural", "China", "Mongolia", "Irkutsk", "Yakutsk"],
+    "Ural": ["Ukraine", "Siberia", "China", "Afghanistan"],
+    "Yakutsk": ["Siberia", "Irkutsk", "Kamchatka"]
+  },
+  "Australia": {
+    "Eastern Australia": ["New Guinea", "Western Australia"],
+    "Indonesia": ["Southeast Asia", "New Guinea", "Western Australia"],
+    "New Guinea": ["Indonesia", "Eastern Australia", "Western Australia"],
+    "Western Australia": ["Indonesia", "New Guinea", "Eastern Australia"]
+  }
+}

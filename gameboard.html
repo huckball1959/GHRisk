@@ -3,116 +3,229 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Risk Map Game Board</title>
+  <title>Risk Dice Simulation</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #000; /* Black background for the whole page */
-      box-sizing: border-box;
       display: flex;
-      align-items: center; /* Center the canvas vertically */
-      justify-content: center; /* Center the canvas horizontally */
-      height: 100vh; /* Full height of the viewport */
-      overflow: hidden; /* Prevent scrolling */
+      height: 100vh;
+      font-family: Arial, sans-serif;
     }
-
-    #canvas-container {
-      width: 98vw; /* Scale to 98% of the viewport width */
-      height: calc(98vw * 9 / 16); /* Maintain a 16:9 aspect ratio */
-      max-height: 98vh; /* Ensure it doesn't exceed 98% of the viewport height */
-      max-width: calc(98vh * 16 / 9); /* Ensure it doesn't exceed the viewport width */
+    /* Main container splits the page into a map area and a panel area */
+    #container {
       display: flex;
-      flex-direction: row;
-      border: 1px solid #ccc; /* Optional: Add a border for visual clarity */
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for effect */
+      width: 100%;
+      height: 100%;
     }
-
-    #map-container {
-      flex: 0.7; /* Map takes 70% of the canvas width */
-      height: 100%; /* Full height of the canvas */
-      position: relative;
-      background-color: #000; /* Set the background color of the map container to black */
-    }
-
-    #risk-map {
-      width: 100%; /* Scale to the width of the container */
-      height: 100%; /* Scale to the height of the container */
-    }
-
-    #panel-container {
-      flex: 0.3; /* Panel container takes 30% of the canvas width */
-      height: 100%; /* Full height of the canvas */
+    /* Map container takes 70% of the page width */
+    #mapContainer {
+      flex: 7;
       display: flex;
-      flex-direction: column; /* Stack the two panels vertically */
-      background-color: #fff;
-      border-left: 1px solid #ccc; /* Separate it visually */
-      box-sizing: border-box;
-    }
-
-    .panel {
-      flex: 1; /* Each panel takes up 50% of the panel-container height */
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      font-size: 1.5vw; /* Placeholder styling for now */
-      background-color: #fff; /* Panel background color */
+      align-items: center;
+      background-color: #eaeaea;
     }
-
-    .panel:not(:last-child) {
-      margin-bottom: 5px; /* Add a small black gap between the two panels */
+    #svgContainer {
+      width: 100%;
+      height: 100%;
+      display: flex;
     }
-
-    .gap {
-      background-color: #000; /* Black gap color */
-      height: 5px; /* Height of the black gap */
-      width: 100%; /* Full width of the panel container */
+    svg {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+    }
+    /* Right panel container for dice roller */
+    #panel {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      background-color: #f0f0f0;
+      padding: 20px;
+      box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.1);
+    }
+    /* Dice roller styling */
+    .dice {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .dice div {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .red-dice {
+      background-color: red;
+      color: white;
+    }
+    .white-dice {
+      background-color: white;
+      color: black;
+      border: 1px solid black;
+    }
+    #rollButton {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #rollButton:hover {
+      background-color: #0056b3;
+    }
+    #results {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div id="canvas-container">
-    <div id="map-container">
-      <object id="risk-map" type="image/svg+xml" data="map.svg"></object>
+  <div id="container">
+    <!-- Left container for the map -->
+    <div id="mapContainer">
+      <div id="svgContainer"></div>
     </div>
-    <div id="panel-container">
-      <div class="panel" id="panel-1">Upper Panel</div>
-      <div class="gap"></div>
-      <div class="panel" id="panel-2">Lower Panel</div>
+
+    <!-- Right container for the dice roller -->
+    <div id="panel">
+      <div class="dice" id="redDice">
+        <div class="red-dice">1</div>
+        <div class="red-dice">1</div>
+        <div class="red-dice">1</div>
+      </div>
+      <div class="dice" id="whiteDice">
+        <div class="white-dice">1</div>
+        <div class="white-dice">1</div>
+      </div>
+      <button id="rollButton">Roll</button>
+      <div id="results"></div>
     </div>
   </div>
 
-  <!-- JavaScript for maintaining clickability without unnecessary hover effects -->
   <script>
-    const mapObject = document.getElementById("risk-map");
+    // Initial army counts
+    let brazilArmies = 50; // Attacker
+    let peruArmies = 50; // Defender
 
-    mapObject.addEventListener("load", () => {
-      try {
-        const svgDoc = mapObject.contentDocument;
-        if (!svgDoc) throw new Error("SVG document not loaded");
+    // Function to roll a single die
+    const rollDie = () => Math.floor(Math.random() * 6) + 1;
 
-        // Add click event listeners to circles
-        const circles = svgDoc.querySelectorAll("circle");
-        circles.forEach(circle => {
-          circle.addEventListener("click", () => {
-            // Placeholder: Log the clicked territory name for now
-            const titleElement = circle.querySelector("title");
-            const territoryName = titleElement ? titleElement.textContent : "Unknown";
-            console.log(`Clicked: ${territoryName}`);
-
-            // Future gameplay logic can be added here
-          });
-        });
-      } catch (error) {
-        console.error("Error loading SVG:", error);
+    // Function to update dice display
+    const updateDiceDisplay = (dice, values) => {
+      const diceElements = dice.children;
+      for (let i = 0; i < values.length; i++) {
+        diceElements[i].textContent = values[i];
       }
-    });
-  </script>
+    };
 
-  <!-- External scripts -->
-  <script src="game-overlay.js"></script>
-  <script src="updateGameboard.js"></script>
+    // Function to handle dice rolling and battle logic
+    const handleRoll = () => {
+      if (brazilArmies < 2 || peruArmies < 1) {
+        document.getElementById('results').textContent = 'Battle Over! Reset to play again.';
+        return;
+      }
+
+      // Roll dice
+      const redDiceValues = [rollDie(), rollDie(), rollDie()].sort((a, b) => b - a);
+      const whiteDiceValues = [rollDie(), rollDie()].sort((a, b) => b - a);
+
+      // Update dice displays
+      updateDiceDisplay(document.getElementById('redDice'), redDiceValues);
+      updateDiceDisplay(document.getElementById('whiteDice'), whiteDiceValues);
+
+      // Compare dice results
+      let attackerLosses = 0;
+      let defenderLosses = 0;
+      for (let i = 0; i < Math.min(redDiceValues.length, whiteDiceValues.length); i++) {
+        if (redDiceValues[i] > whiteDiceValues[i]) {
+          defenderLosses++;
+        } else {
+          attackerLosses++;
+        }
+      }
+
+      // Update armies
+      brazilArmies -= attackerLosses;
+      peruArmies -= defenderLosses;
+
+      // Display results
+      document.getElementById('results').textContent = `
+        Brazil lost ${attackerLosses} armies. Remaining: ${brazilArmies}
+        Peru lost ${defenderLosses} armies. Remaining: ${peruArmies}
+      `;
+
+      // Update map text (if applicable)
+      const brazilText = document.querySelector('#brazil-text');
+      const peruText = document.querySelector('#peru-text');
+      if (brazilText) brazilText.textContent = brazilArmies;
+      if (peruText) peruText.textContent = peruArmies;
+    };
+
+    // Add event listener to roll button
+    document.getElementById('rollButton').addEventListener('click', handleRoll);
+
+    // Load the SVG map and dynamically adjust scaling
+    fetch('map.svg')
+      .then(response => response.text())
+      .then(svgContent => {
+        // Insert the SVG content into the container
+        const container = document.getElementById('svgContainer');
+        container.innerHTML = svgContent;
+
+        // Ensure the SVG stretches to fill the container
+        const svgElement = container.querySelector('svg');
+        if (svgElement) {
+          svgElement.setAttribute('preserveAspectRatio', 'none'); // Ensures the map stretches
+        }
+
+        // Function to style a circle and add text
+        const styleCircle = (id, fillColor, textColor, textContent) => {
+          const circle = container.querySelector(`#${id}`);
+          if (circle) {
+            circle.setAttribute('style', `fill:${fillColor};stroke-width:0.75`);
+            const existingText = container.querySelector(`#${id}-text`);
+            if (existingText) {
+              existingText.textContent = textContent;
+              existingText.setAttribute('fill', textColor);
+            } else {
+              const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+              textElement.setAttribute('id', `${id}-text`);
+              textElement.setAttribute('x', circle.getAttribute('cx'));
+              textElement.setAttribute('y', circle.getAttribute('cy'));
+              textElement.setAttribute('text-anchor', 'middle');
+              textElement.setAttribute('dominant-baseline', 'middle');
+              textElement.setAttribute('fill', textColor);
+              textElement.setAttribute('font-size', '36');
+              textElement.setAttribute('font-family', 'Arial');
+              textElement.setAttribute('font-weight', 'bolder');
+              textElement.textContent = textContent;
+              circle.parentNode.appendChild(textElement);
+            }
+          }
+        };
+
+        // Style Brazil and Peru
+        styleCircle('brazil', 'red', 'black', brazilArmies);
+        styleCircle('peru', 'blue', 'white', peruArmies);
+      })
+      .catch(error => console.error('Error loading the SVG file:', error));
+  </script>
 </body>
 </html>
