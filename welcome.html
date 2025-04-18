@@ -1,0 +1,136 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row =>
+                    row.some(cell => cell !== '' && cell !== null && cell !== undefined)
+                );
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Huckball's Risk - Welcome</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    .container {
+      text-align: center;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .player-select {
+      margin: 10px 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Huckball's Risk</h1>
+    <h2>Select Players</h2>
+    <div class="player-select">
+      <label><input type="checkbox" id="guido" checked disabled> Guido (Blue)</label><br>
+      <label><input type="checkbox" id="karl"> Karl (Pink)</label><br>
+      <label><input type="checkbox" id="mickey"> Mickey (Red)</label><br>
+      <label><input type="checkbox" id="nooch"> Nooch (Black)</label>
+    </div>
+    <button onclick="startGame()">Start Game</button>
+    <div>
+      <input type="file" id="loadGame" accept=".json" style="display: none;">
+      <button onclick="document.getElementById('loadGame').click()">Load Game</button>
+    </div>
+  </div>
+
+  <script>
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[i], array[j]];
+      }
+      return array;
+    }
+
+    function startGame() {
+      const players = [{ name: 'Guido', color: '#0000FF' }];
+      if (document.getElementById('karl').checked) players.push({ name: 'Karl', color: '#FFC1CC' });
+      if (document.getElementById('mickey').checked) players.push({ name: 'Mickey', color: '#FF0000' });
+      if (document.getElementById('nooch').checked) players.push({ name: 'Nooch', color: '#000000' });
+
+      if (players.length < 3) {
+        alert('Please select at least 2 additional players.');
+        return;
+      }
+
+      const tableOrder = shuffleArray(players.map(p => p.name));
+      const params = new URLSearchParams();
+      params.append('players', JSON.stringify(players));
+      params.append('tableOrder', JSON.stringify(tableOrder));
+      window.location.href = `gameboard.html?${params.toString()}`;
+    }
+
+    document.getElementById('loadGame').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const gameState = JSON.parse(e.target.result);
+          const params = new URLSearchParams();
+          params.append('gameState', JSON.stringify(gameState));
+          window.location.href = `gameboard.html?${params.toString()}`;
+        };
+        reader.readAsText(file);
+      }
+    });
+  </script>
+</body>
+</html>

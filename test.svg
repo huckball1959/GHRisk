@@ -1,0 +1,5 @@
+<svg width="1440" height="1440" viewBox="0 0 1440 1440" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="1440" fill="#ccc"/>
+  <ellipse id="brazil" cx="500" cy="500" rx="20" ry="20" fill="blue"/>
+  <text x="500" y="500" fill="white" text-anchor="middle" dominant-baseline="middle">001</text>
+</svg>

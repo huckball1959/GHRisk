@@ -3,229 +3,832 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Risk Dice Simulation</title>
+  <title>Huckball's Risk</title>
   <style>
-    body {
+    * {
       margin: 0;
       padding: 0;
-      display: flex;
+      box-sizing: border-box;
+    }
+
+    html, body {
       height: 100vh;
-      font-family: Arial, sans-serif;
+      overflow: hidden;
     }
-    /* Main container splits the page into a map area and a panel area */
-    #container {
+
+    body {
       display: flex;
-      width: 100%;
-      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: black;
     }
-    /* Map container takes 70% of the page width */
-    #mapContainer {
-      flex: 7;
+
+    #leftContainer {
+      flex: 3;
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: #eaeaea;
+      background-color: #f0f0f0;
+      margin: 0;
+      height: 100%;
     }
+
+    #rightContainer {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #topPanel {
+      flex: 2;
+      background-color: white;
+      padding: 10px;
+      border-bottom: 1px solid black;
+      display:eyes flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      flex-wrap: wrap;
+    }
+
+    #bottomPanel {
+      flex: 1;
+      background-color: white;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     #svgContainer {
       width: 100%;
       height: 100%;
       display: flex;
+      margin: 0;
     }
+
     svg {
       width: 100%;
       height: 100%;
       object-fit: fill;
     }
-    /* Right panel container for dice roller */
-    #panel {
-      flex: 3;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      background-color: #f0f0f0;
-      padding: 20px;
-      box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.1);
+
+    image, g:not(.territory) {
+      pointer-events: none;
     }
-    /* Dice roller styling */
-    .dice {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
+
+    text {
+      font-family: Arial, sans-serif;
+      font-size: 36px;
+      font-weight: bold;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    ellipse {
+      pointer-events: all;
+      cursor: pointer;
+    }
+
+    ellipse.selected {
+      stroke: yellow;
+      stroke-width: 3;
+    }
+
+    ellipse.highlight-placed {
+      stroke: yellow;
+      stroke-width: 3;
+    }
+
+    .player-stats {
+      margin: 5px 0;
+      font-size: 16px;
+    }
+
+    .prompt {
+      font-size: 18px;
+      font-weight: bold;
       margin: 10px 0;
     }
-    .dice div {
-      width: 60px;
-      height: 60px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
-      font-weight: bold;
-      border-radius: 8px;
-      text-align: center;
+
+    .input-group {
+      margin: 10px 0;
     }
-    .red-dice {
-      background-color: red;
-      color: white;
-    }
-    .white-dice {
-      background-color: white;
-      color: black;
-      border: 1px solid black;
-    }
-    #rollButton {
-      margin-top: 20px;
-      padding: 10px 20px;
+
+    input, button {
+      padding: 5px;
       font-size: 16px;
-      font-weight: bold;
+    }
+
+    button {
+      background-color: #4CAF50;
       color: white;
-      background-color: #007bff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      margin: 5px;
     }
-    #rollButton:hover {
-      background-color: #0056b3;
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
-    #results {
-      margin-top: 20px;
+
+    button:hover:not(:disabled) {
+      background-color: #45a049;
+    }
+
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100px;
+      height: 150px;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+
+    .card:hover .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 5px;
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+    }
+
+    .card-back {
+      background-image: url('cards/back.png');
+      background-size: cover;
+    }
+
+    .error {
+      color: red;
       font-size: 18px;
-      font-weight: bold;
       text-align: center;
+    }
+
+    #diceFrame {
+      width: 100%;
+      height: 200px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <!-- Left container for the map -->
-    <div id="mapContainer">
-      <div id="svgContainer"></div>
+  <div id="leftContainer">
+    <div id="svgContainer"></div>
+  </div>
+  <div id="rightContainer">
+    <div id="topPanel">
+      <div id="playerStats"></div>
+      <div id="prompt"></div>
+      <div id="cardOptions"></div>
+      <div id="inputGroup"></div>
+      <button onclick="saveGame()">Save Game</button>
+      <iframe id="diceFrame" src="diceroll.html" frameborder="0"></iframe>
     </div>
-
-    <!-- Right container for the dice roller -->
-    <div id="panel">
-      <div class="dice" id="redDice">
-        <div class="red-dice">1</div>
-        <div class="red-dice">1</div>
-        <div class="red-dice">1</div>
-      </div>
-      <div class="dice" id="whiteDice">
-        <div class="white-dice">1</div>
-        <div class="white-dice">1</div>
-      </div>
-      <button id="rollButton">Roll</button>
-      <div id="results"></div>
+    <div id="bottomPanel">
+      <div id="cardContainer" class="card-container"></div>
     </div>
   </div>
 
   <script>
-    // Initial army counts
-    let brazilArmies = 50; // Attacker
-    let peruArmies = 50; // Defender
+    const territoryIds = [
+      'alaska', 'northwest_territory', 'greenland', 'alberta', 'ontario', 'quebec',
+      'western_united_states', 'eastern_united_states', 'central_america',
+      'venezuela', 'peru', 'brazil', 'argentina',
+      'iceland', 'scandinavia', 'ukraine', 'great_britain', 'northern_europe', 'southern_europe', 'western_europe',
+      'north_africa', 'egypt', 'east_africa', 'congo', 'south_africa', 'madagascar',
+      'siberia', 'ural', 'afghanistan', 'china', 'middle_east', 'india', 'siam',
+      'yakutsk', 'kamchatka', 'irkutsk', 'mongolia', 'japan',
+      'indonesia', 'new_guinea', 'western_australia', 'eastern_australia'
+    ];
 
-    // Function to roll a single die
-    const rollDie = () => Math.floor(Math.random() * 6) + 1;
-
-    // Function to update dice display
-    const updateDiceDisplay = (dice, values) => {
-      const diceElements = dice.children;
-      for (let i = 0; i < values.length; i++) {
-        diceElements[i].textContent = values[i];
-      }
+    const continents = {
+      'North America': { territories: ['alaska', 'northwest_territory', 'greenland', 'alberta', 'ontario', 'quebec', 'western_united_states', 'eastern_united_states', 'central_america'], baseValue: 5, count: 0 },
+      'South America': { territories: ['venezuela', 'peru', 'brazil', 'argentina'], baseValue: 2, count: 0 },
+      'Europe': { territories: ['iceland', 'scandinavia', 'ukraine', 'great_britain', 'northern_europe', 'southern_europe', 'western_europe'], baseValue: 5, count: 0 },
+      'Africa': { territories: ['north_africa', 'egypt', 'east_africa', 'congo', 'south_africa', 'madagascar'], baseValue: 3, count: 0 },
+      'Asia': { territories: ['siberia', 'ural', 'afghanistan', 'china', 'middle_east', 'india', 'siam', 'yakutsk', 'kamchatka', 'irkutsk', 'mongolia', 'japan'], baseValue: 7, count: 0 },
+      'Australia': { territories: ['indonesia', 'new_guinea', 'western_australia', 'eastern_australia'], baseValue: 2, count: 0 }
     };
 
-    // Function to handle dice rolling and battle logic
-    const handleRoll = () => {
-      if (brazilArmies < 2 || peruArmies < 1) {
-        document.getElementById('results').textContent = 'Battle Over! Reset to play again.';
+    let players = [];
+    let tableOrder = [];
+    let currentPlayerIndex = 0;
+    let gameState = 'initialPlacement';
+    let selectedTerritory = null;
+    let bank = 0;
+    let initialBank = 0;
+    let territories = {};
+    let cards = [];
+    let deck = [...territoryIds, 'wild1', 'wild2'];
+    let phase = 'cardPlay';
+    let attackerTerritory = null;
+    let defenderTerritory = null;
+    let placement = {};
+    let highlightMode = false;
+    const offsetX = -222.00;
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[i], array[j]];
+      }
+      return array;
+    }
+
+    function assignTerritories() {
+      const shuffled = shuffleArray([...territoryIds]);
+      const assignments = {};
+      players.forEach(p => assignments[p.name] = []);
+      const playerCount = players.length;
+      let currentPlayer = 0;
+
+      shuffled.forEach(territory => {
+        assignments[players[currentPlayer].name].push(territory);
+        currentPlayer = (currentPlayer + 1) % playerCount;
+      });
+
+      Object.entries(continents).forEach(([continent, data]) => {
+        players.forEach(player => {
+          const owned = data.territories.filter(t => assignments[player.name].includes(t)).length;
+          if (owned === data.territories.length) {
+            const otherPlayer = players.find(p => p.name !== player.name);
+            const swapTerritory = data.territories[0];
+            const otherTerritory = assignments[otherPlayer.name][0];
+            assignments[player.name] = assignments[player.name].filter(t => t !== swapTerritory);
+            assignments[otherPlayer.name] = assignments[otherPlayer.name].filter(t => t !== otherTerritory);
+            assignments[player.name].push(otherTerritory);
+            assignments[otherPlayer.name].push(swapTerritory);
+          }
+        });
+      });
+
+      return assignments;
+    }
+
+    function initializeGame() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('gameState')) {
+        const savedState = JSON.parse(params.get('gameState'));
+        players = savedState.players;
+        tableOrder = savedState.tableOrder;
+        currentPlayerIndex = savedState.currentPlayerIndex;
+        gameState = savedState.gameState;
+        territories = savedState.territories;
+        deck = savedState.deck;
+        continents = savedState.continents;
+        bank = savedState.bank;
+        phase = savedState.phase;
+        initialBank = savedState.initialBank || (players.length === 4 ? 30 : 35);
+      } else {
+        players = JSON.parse(params.get('players') || '[]');
+        tableOrder = JSON.parse(params.get('tableOrder') || '[]');
+        if (players.length < 3) {
+          alert('Invalid game setup.');
+          window.location.href = 'welcome.html';
+          return;
+        }
+
+        const assignments = assignTerritories();
+        const baseArmies = players.length === 4 ? 30 : 35;
+        initialBank = baseArmies;
+        players.forEach(p => {
+          const territoryCount = assignments[p.name].length;
+          p.armies = baseArmies - territoryCount;
+          p.cards = [];
+          p.totalArmies = territoryCount;
+        });
+
+        territoryIds.forEach(id => {
+          const owner = players.find(p => assignments[p.name].includes(id));
+          territories[id] = { owner: owner.name, armies: 1 };
+        });
+
+        shuffleArray(deck);
+        currentPlayerIndex = Math.floor(Math.random() * players.length);
+        bank = players.find(p => p.name === tableOrder[currentPlayerIndex]).armies;
+      }
+      placement = {};
+      highlightMode = false;
+      updateUI();
+    }
+
+    function saveGame() {
+      const gameState = {
+        players,
+        tableOrder,
+        currentPlayerIndex,
+        gameState,
+        territories,
+        deck,
+        continents,
+        bank,
+        phase,
+        initialBank
+      };
+      const blob = new Blob([JSON.stringify(gameState)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'huckballs_risk_save.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function updateTerritoryArmies(territoryId, armies) {
+      const svgElement = document.querySelector('#svgContainer svg');
+      if (!svgElement) return;
+      const ellipse = svgElement.querySelector(`[id="${territoryId}"]`);
+      if (!ellipse) return;
+      const cx = parseFloat(ellipse.getAttribute('cx'));
+      const cy = parseFloat(ellipse.getAttribute('cy'));
+      const transform = ellipse.getAttribute('transform') || '';
+      let parentTransform = '';
+      const parentG = ellipse.closest('g');
+      if (parentG) {
+        parentTransform = parentG.getAttribute('transform') || '';
+      }
+      console.log(`Territory ${territoryId}: cx=${cx}, cy=${cy}, transform=${transform}, parentTransform=${parentTransform}`);
+
+      const adjustedX = cx + offsetX;
+
+      const textId = `${territoryId}-text`;
+      let textElement = svgElement.querySelector(`#${textId}`);
+      if (!textElement) {
+        textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElement.setAttribute('id', textId);
+        textElement.setAttribute('x', adjustedX);
+        textElement.setAttribute('y', cy);
+        textElement.setAttribute('text-anchor', 'middle');
+        textElement.setAttribute('dominant-baseline', 'middle');
+        textElement.setAttribute('font-size', '36');
+        textElement.setAttribute('font-family', 'Arial');
+        textElement.setAttribute('font-weight', 'bold');
+        svgElement.appendChild(textElement);
+      }
+
+      if (highlightMode && placement[territoryId]) {
+        textElement.textContent = `+${placement[territoryId].toString().padStart(2, '0')}`;
+        ellipse.classList.add('highlight-placed');
+      } else {
+        textElement.textContent = armies.toString().padStart(3, '0');
+        ellipse.classList.remove('highlight-placed');
+      }
+
+      const player = players.find(p => p.name === territories[territoryId].owner);
+      textElement.setAttribute('fill', player.name === 'Karl' ? 'black' : 'white');
+      console.log(`Updated ${territoryId} to ${textElement.textContent} at x=${adjustedX}, y=${cy}`);
+      territories[territoryId].armies = armies;
+      updatePlayerStats();
+    }
+
+    function toggleArmiesLaid() {
+      highlightMode = !highlightMode;
+      Object.keys(placement).forEach(territoryId => {
+        updateTerritoryArmies(territoryId, territories[territoryId].armies);
+      });
+      if (!highlightMode) {
+        Object.values(territories).forEach(t => {
+          const ellipse = document.querySelector(`#${t.owner}-ellipse`);
+          if (ellipse) ellipse.classList.remove('highlight-placed');
+        });
+      }
+      updateUI();
+    }
+
+    function resetPlacements() {
+      Object.keys(placement).forEach(territoryId => {
+        const armies = territories[territoryId].armies - placement[territoryId];
+        bank += placement[territoryId];
+        updateTerritoryArmies(territoryId, armies);
+      });
+      placement = {};
+      highlightMode = false;
+      updateUI();
+    }
+
+    function updatePlayerStats() {
+      const stats = document.getElementById('playerStats');
+      stats.innerHTML = '<h2>Players</h2>';
+      tableOrder.forEach((name, i) => {
+        const player = players.find(p => p.name === name);
+        const isTurn = i === currentPlayerIndex;
+        const totalArmies = Object.values(territories).filter(t => t.owner === name).reduce((sum, t) => sum + t.armies, 0);
+        player.totalArmies = totalArmies;
+        stats.innerHTML += `
+          <div class="player-stats" style="color: ${player.color}">
+            ${name}: ${player.cards.length} cards, ${totalArmies} armies ${isTurn ? '(Turn, Bank: ' + bank + ')' : ''}
+          </div>
+        `;
+      });
+
+      const continentValues = Object.entries(continents).map(([name, data]) => {
+        const value = data.baseValue * (data.count + 1);
+        return `${name}: ${value}`;
+      }).join(', ');
+      stats.innerHTML += `<div>Continents: ${continentValues}</div>`;
+      stats.innerHTML += `<div>Cards in Deck: ${deck.length}</div>`;
+    }
+
+    function updateCards() {
+      const cardContainer = document.getElementById('cardContainer');
+      cardContainer.innerHTML = '';
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+      currentPlayer.cards.forEach(card => {
+        const cardElement = document.createElement('div');
+        cardElement.className = 'card';
+        cardElement.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">
+              <img src="cards/${card === 'wild1' || card === 'wild2' ? card : card.replace(/_/g, '_')}.png" style="width: 100%; height: 100%; border-radius: 5px;" onerror="this.src='cards/placeholder.png';">
+            </div>
+            <div class="card-back"></div>
+          </div>
+        `;
+        cardContainer.appendChild(cardElement);
+      });
+    }
+
+    function updateUI() {
+      const prompt = document.getElementById('prompt');
+      const inputGroup = document.getElementById('inputGroup');
+      const cardOptions = document.getElementById('cardOptions');
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+
+      if (gameState === 'initialPlacement') {
+        prompt.textContent = `${currentPlayer.name}, place your armies (${bank} remaining).`;
+        inputGroup.innerHTML = `
+          <input type="number" id="armyInput" placeholder="Enter armies (e.g., 5 or -3)">
+          <button onclick="deployArmies()">Deploy</button>
+          <button onclick="toggleArmiesLaid()">Armies Laid</button>
+          <button onclick="resetPlacements()">Reset Placements</button>
+          <button id="confirmBtn" onclick="confirmDeployment()" ${bank === 0 ? '' : 'disabled'}>Confirm</button>
+        `;
+        cardOptions.innerHTML = '';
+      } else if (gameState === 'gameplay') {
+        if (phase === 'cardPlay') {
+          prompt.textContent = `${currentPlayer.name}, play cards or skip.`;
+          const buttons = currentPlayer.cards.map((card, i) => `
+            <button onclick="playCard(${i})">${card}</button>
+          `).join('');
+          cardOptions.innerHTML = `
+            <div>${buttons}</div>
+            <button onclick="skipCardPlay()">Skip Card Play</button>
+          `;
+          inputGroup.innerHTML = '';
+        } else if (phase === 'deploy') {
+          prompt.textContent = `${currentPlayer.name}, deploy ${bank} armies.`;
+          inputGroup.innerHTML = `
+            <input type="number" id="armyInput" min="0" max="${bank}" placeholder="Armies">
+            <button onclick="deployArmies()">Deploy</button>
+            <button onclick="startAttack()">Start Attack</button>
+          `;
+          cardOptions.innerHTML = '';
+        } else if (phase === 'attack') {
+          prompt.textContent = `${currentPlayer.name}, select territories to attack.`;
+          inputGroup.innerHTML = `
+            <button onclick="endTurn()">End Turn</button>
+          `;
+          cardOptions.innerHTML = '';
+        }
+      }
+      updatePlayerStats();
+      updateCards();
+    }
+
+    function deployArmies() {
+      if (!selectedTerritory) {
+        alert('Select a territory first.');
         return;
       }
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+      if (territories[selectedTerritory].owner !== currentPlayer.name) {
+        alert('Select your own territory.');
+        return;
+      }
+      const input = document.getElementById('armyInput');
+      const value = parseInt(input.value) || 0;
+      if (value === 0) {
+        alert('Enter a valid number.');
+        return;
+      }
+      const newArmies = territories[selectedTerritory].armies + value;
+      if (newArmies < 1) {
+        alert('Cannot reduce below 1 army.');
+        return;
+      }
+      if (gameState === 'initialPlacement' && bank - value < 0) {
+        alert('Not enough armies in bank.');
+        return;
+      }
+      if (gameState === 'initialPlacement' && bank - value > initialBank) {
+        alert('Bank cannot exceed initial armies.');
+        return;
+      }
+      bank -= value;
+      placement[selectedTerritory] = (placement[selectedTerritory] || 0) + value;
+      if (placement[selectedTerritory] === 0) {
+        delete placement[selectedTerritory];
+      }
+      updateTerritoryArmies(selectedTerritory, newArmies);
+      updateUI();
+      input.value = '';
+    }
 
-      // Roll dice
-      const redDiceValues = [rollDie(), rollDie(), rollDie()].sort((a, b) => b - a);
-      const whiteDiceValues = [rollDie(), rollDie()].sort((a, b) => b - a);
+    function confirmDeployment() {
+      if (bank > 0) {
+        alert('Deploy all armies before confirming.');
+        return;
+      }
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+      currentPlayer.armies = 0;
+      placement = {};
+      highlightMode = false;
+      currentPlayerIndex = (currentPlayerIndex + 1) % tableOrder.length;
+      if (players.every(p => p.armies === 0)) {
+        alert('All armies placed! Starting gameplay.');
+        gameState = 'gameplay';
+        currentPlayerIndex = Math.floor(Math.random() * players.length);
+        phase = 'cardPlay';
+        const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+        const territoryCount = Object.values(territories).filter(t => t.owner === currentPlayer.name).length;
+        bank = Math.max(3, Math.floor(territoryCount / 4) * 3);
+        Object.entries(continents).forEach(([name, data]) => {
+          if (data.territories.every(t => territories[t].owner === currentPlayer.name)) {
+            bank += data.baseValue * (data.count + 1);
+            data.count++;
+          }
+        });
+      } else {
+        bank = players.find(p => p.name === tableOrder[currentPlayerIndex]).armies;
+      }
+      updateUI();
+    }
 
-      // Update dice displays
-      updateDiceDisplay(document.getElementById('redDice'), redDiceValues);
-      updateDiceDisplay(document.getElementById('whiteDice'), whiteDiceValues);
+    function playCard(index) {
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+      const card = currentPlayer.cards[index];
+      let options = `
+        <button onclick="cardLoseArmies('${card}')">Lose 2 Armies</button>
+        <button onclick="cardAerialAttack('${card}')">Aerial Attack</button>
+      `;
+      if (card.startsWith('wild')) {
+        options += `<button onclick="cardCounterWildcard(${index})">Counter Wildcard</button>`;
+      }
+      document.getElementById('cardOptions').innerHTML = `
+        <div>Card: ${card}</div>
+        ${options}
+        <button onclick="updateUI()">Cancel</button>
+      `;
+    }
 
-      // Compare dice results
-      let attackerLosses = 0;
-      let defenderLosses = 0;
-      for (let i = 0; i < Math.min(redDiceValues.length, whiteDiceValues.length); i++) {
-        if (redDiceValues[i] > whiteDiceValues[i]) {
-          defenderLosses++;
+    function cardLoseArmies(card) {
+      if (!card.startsWith('wild') && territories[card]) {
+        const owner = territories[card].owner;
+        const armies = territories[card].armies;
+        const currentPlayer = tableOrder[currentPlayerIndex];
+        if (armies <= 2) {
+          territories[card].owner = currentPlayer;
+          territories[card].armies = 1;
+          updateTerritoryArmies(card, 1);
+          const ellipse = document.querySelector(`#${card}`);
+          ellipse.style.fill = players.find(p => p.name === currentPlayer).color;
         } else {
-          attackerLosses++;
+          updateTerritoryArmies(card, armies - 2);
         }
       }
+      bank += 2;
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+      currentPlayer.cards.splice(currentPlayer.cards.indexOf(card), 1);
+      updateUI();
+    }
 
-      // Update armies
-      brazilArmies -= attackerLosses;
-      peruArmies -= defenderLosses;
+    function cardAerialAttack(card) {
+      phase = 'attack';
+      attackerTerritory = prompt('Select your territory to attack from:');
+      defenderTerritory = prompt('Select territory to attack:');
+      if (territories[attackerTerritory]?.owner === tableOrder[currentPlayerIndex] && territories[defenderTerritory]) {
+        document.getElementById('diceFrame').contentWindow.postMessage({
+          attackerTerritory,
+          attacker: tableOrder[currentPlayerIndex],
+          defenderTerritory,
+          defender: territories[defenderTerritory].owner
+        }, '*');
+      }
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+      currentPlayer.cards.splice(currentPlayer.cards.indexOf(card), 1);
+      updateUI();
+    }
 
-      // Display results
-      document.getElementById('results').textContent = `
-        Brazil lost ${attackerLosses} armies. Remaining: ${brazilArmies}
-        Peru lost ${defenderLosses} armies. Remaining: ${peruArmies}
-      `;
+    function cardCounterWildcard(index) {
+      alert('Wildcard counter stored for defense.');
+      const currentPlayer = players.find(p => p.name === tableOrder[currentPlayerIndex]);
+      currentPlayer.cards.splice(index, 1);
+      currentPlayer.hasCounterWildcard = true;
+      updateUI();
+    }
 
-      // Update map text (if applicable)
-      const brazilText = document.querySelector('#brazil-text');
-      const peruText = document.querySelector('#peru-text');
-      if (brazilText) brazilText.textContent = brazilArmies;
-      if (peruText) peruText.textContent = peruArmies;
-    };
+    function skipCardPlay() {
+      phase = 'deploy';
+      const currentPlayer = tableOrder[currentPlayerIndex];
+      const territoryCount = Object.values(territories).filter(t => t.owner === currentPlayer).length;
+      bank = Math.max(3, Math.floor(territoryCount / 4) * 3);
+      Object.entries(continents).forEach(([name, data]) => {
+        if (data.territories.every(t => territories[t].owner === currentPlayer)) {
+          bank += data.baseValue * (data.count + 1);
+          data.count++;
+        }
+      });
+      updateUI();
+    }
 
-    // Add event listener to roll button
-    document.getElementById('rollButton').addEventListener('click', handleRoll);
+    function startAttack() {
+      phase = 'attack';
+      updateUI();
+    }
 
-    // Load the SVG map and dynamically adjust scaling
-    fetch('map.svg')
-      .then(response => response.text())
+    function endTurn() {
+      if (Object.values(territories).some(t => t.owner !== tableOrder[currentPlayerIndex] && t.conquered)) {
+        if (deck.length > 0) {
+          const card = deck.pop();
+          players.find(p => p.name === tableOrder[currentPlayerIndex]).cards.push(card);
+        }
+      }
+      Object.values(territories).forEach(t => delete t.conquered);
+      currentPlayerIndex = (currentPlayerIndex + 1) % tableOrder.length;
+      phase = 'cardPlay';
+      bank = 0;
+      attackerTerritory = null;
+      defenderTerritory = null;
+      updateUI();
+    }
+
+    function handleBattleResult(data) {
+      if (data.attackerLoss > 0) {
+        updateTerritoryArmies(data.attackerTerritory, territories[data.attackerTerritory].armies - data.attackerLoss);
+      }
+      if (data.defenderLoss > 0) {
+        updateTerritoryArmies(data.defenderTerritory, territories[data.defenderTerritory].armies - data.defenderLoss);
+      }
+      if (territories[data.defenderTerritory].armies === 0) {
+        territories[data.defenderTerritory].owner = data.attacker;
+        territories[data.defenderTerritory].conquered = true;
+        const armies = parseInt(prompt('How many armies to move? (Min 1)')) || 1;
+        updateTerritoryArmies(data.defenderTerritory, armies);
+        updateTerritoryArmies(data.attackerTerritory, territories[data.attackerTerritory].armies - armies);
+        const ellipse = document.querySelector(`#${data.defenderTerritory}`);
+        ellipse.style.fill = players.find(p => p.name === data.attacker).color;
+        const defeatedPlayer = players.find(p => !Object.values(territories).some(t => t.owner === p.name));
+        if (defeatedPlayer) {
+          const currentPlayer = players.find(p => p.name === data.attacker);
+          currentPlayer.cards.push(...defeatedPlayer.cards.slice(0, 5 - currentPlayer.cards.length));
+          defeatedPlayer.cards = [];
+          Object.entries(continents).forEach(([name, data]) => {
+            if (data.territories.every(t => territories[t].owner === data.attacker)) {
+              currentPlayer.armies += data.baseValue * (data.count + 1);
+              data.count++;
+            }
+          });
+        }
+      }
+      attackerTerritory = null;
+      defenderTerritory = null;
+      document.querySelectorAll('ellipse').forEach(e => e.classList.remove('selected'));
+      updateUI();
+    }
+
+    function startTurn() {
+      phase = 'cardPlay';
+      bank = 0;
+      updateUI();
+    }
+
+    fetch('widemap.svg')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}, URL: ${response.url}`);
+        }
+        return response.text();
+      })
       .then(svgContent => {
-        // Insert the SVG content into the container
         const container = document.getElementById('svgContainer');
         container.innerHTML = svgContent;
-
-        // Ensure the SVG stretches to fill the container
         const svgElement = container.querySelector('svg');
-        if (svgElement) {
-          svgElement.setAttribute('preserveAspectRatio', 'none'); // Ensures the map stretches
+        if (!svgElement) {
+          throw new Error('SVG element not found in loaded content');
         }
+        svgElement.setAttribute('width', '100%');
+        svgElement.setAttribute('height', '100%');
+        svgElement.setAttribute('preserveAspectRatio', 'none');
 
-        // Function to style a circle and add text
-        const styleCircle = (id, fillColor, textColor, textContent) => {
-          const circle = container.querySelector(`#${id}`);
-          if (circle) {
-            circle.setAttribute('style', `fill:${fillColor};stroke-width:0.75`);
-            const existingText = container.querySelector(`#${id}-text`);
-            if (existingText) {
-              existingText.textContent = textContent;
-              existingText.setAttribute('fill', textColor);
-            } else {
-              const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-              textElement.setAttribute('id', `${id}-text`);
-              textElement.setAttribute('x', circle.getAttribute('cx'));
-              textElement.setAttribute('y', circle.getAttribute('cy'));
+        initializeGame();
+
+        Object.entries(territories).forEach(([id, data]) => {
+          const ellipse = container.querySelector(`[id="${id}"]`);
+          if (ellipse) {
+            const player = players.find(p => p.name === data.owner);
+            ellipse.style.fill = player.color;
+            ellipse.style.cursor = 'pointer';
+            const cx = parseFloat(ellipse.getAttribute('cx'));
+            const cy = parseFloat(ellipse.getAttribute('cy'));
+            const transform = ellipse.getAttribute('transform') || '';
+            let parentTransform = '';
+            const parentG = ellipse.closest('g');
+            if (parentG) {
+              parentTransform = parentG.getAttribute('transform') || '';
+            }
+            console.log(`Territory ${id}: cx=${cx}, cy=${cy}, transform=${transform}, parentTransform=${parentTransform}`);
+
+            const adjustedX = cx + offsetX;
+
+            const textId = `${id}-text`;
+            let textElement = svgElement.querySelector(`#${textId}`);
+            if (!textElement) {
+              textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+              textElement.setAttribute('id', textId);
+              textElement.setAttribute('x', adjustedX);
+              textElement.setAttribute('y', cy);
               textElement.setAttribute('text-anchor', 'middle');
               textElement.setAttribute('dominant-baseline', 'middle');
-              textElement.setAttribute('fill', textColor);
               textElement.setAttribute('font-size', '36');
               textElement.setAttribute('font-family', 'Arial');
-              textElement.setAttribute('font-weight', 'bolder');
-              textElement.textContent = textContent;
-              circle.parentNode.appendChild(textElement);
+              textElement.setAttribute('font-weight', 'bold');
+              textElement.setAttribute('fill', player.name === 'Karl' ? 'black' : 'white');
+              textElement.textContent = data.armies.toString().padStart(3, '0');
+              svgElement.appendChild(textElement);
             }
-          }
-        };
 
-        // Style Brazil and Peru
-        styleCircle('brazil', 'red', 'black', brazilArmies);
-        styleCircle('peru', 'blue', 'white', peruArmies);
+            const clickHandler = () => {
+              console.log(`Clicked ${id}`);
+              if (gameState === 'initialPlacement' || phase === 'deploy') {
+                document.querySelectorAll('ellipse').forEach(e => e.classList.remove('selected'));
+                ellipse.classList.add('selected');
+                selectedTerritory = id;
+                updateUI();
+              } else if (phase === 'attack') {
+                const currentPlayer = tableOrder[currentPlayerIndex];
+                if (!attackerTerritory && territories[id].owner === currentPlayer) {
+                  attackerTerritory = id;
+                  ellipse.classList.add('selected');
+                  document.getElementById('diceFrame').contentWindow.postMessage({
+                    attackerTerritory: id,
+                    attacker: currentPlayer
+                  }, '*');
+                } else if (attackerTerritory && territories[id].owner !== currentPlayer) {
+                  defenderTerritory = id;
+                  ellipse.classList.add('selected');
+                  document.getElementById('diceFrame').contentWindow.postMessage({
+                    defenderTerritory: id,
+                    defender: territories[id].owner
+                  }, '*');
+                }
+              }
+            };
+
+            ellipse.addEventListener('click', clickHandler);
+          } else {
+            console.warn(`Ellipse with ID "${id}" not found in SVG.`);
+          }
+        });
+
+        window.addEventListener('message', event => {
+          const data = event.data;
+          if (data && data.attacker && data.defender) {
+            handleBattleResult(data);
+          }
+        });
       })
-      .catch(error => console.error('Error loading the SVG file:', error));
+      .catch(error => {
+        const container = document.getElementById('svgContainer');
+        container.innerHTML = `
+          <p class="error">Failed to load the map: ${error.message}. Check console for details.</p>
+          <p class="error">Ensure widemap.svg is in the project directory.</p>
+        `;
+        console.error('Error loading SVG:', error);
+      });
   </script>
 </body>
 </html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alignment Tool - Huckball's Risk</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      font-family: Arial, sans-serif;
+      background-color: black;
+    }
+
+    #leftContainer {
+      flex: 3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      height: 100%;
+    }
+
+    #rightContainer {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #topPanel {
+      flex: 2;
+      background-color: white;
+      padding: 10px;
+      border-bottom: 1px solid black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      flex-wrap: wrap;
+    }
+
+    #bottomPanel {
+      flex: 1;
+      background-color: white;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #svgContainer {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      margin: 0;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+    }
+
+    text {
+      font-family: Arial, sans-serif;
+      font-size: 36px;
+      font-weight: bold;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      cursor: move;
+      user-select: none;
+    }
+
+    #info {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    .error {
+      color: red;
+      font-size: 18px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="leftContainer">
+    <div id="svgContainer"></div>
+  </div>
+  <div id="rightContainer">
+    <div id="topPanel">
+      <div id="info">Drag Alaska's number to center it. Offset: <span id="offset">0</span>px</div>
+    </div>
+    <div id="bottomPanel"></div>
+  </div>
+
+  <script>
+    let offsetX = 0;
+    let isDragging = false;
+    let startX, startTextX;
+
+    fetch('widemap.svg')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}, URL: ${response.url}`);
+        }
+        return response.text();
+      })
+      .then(svgContent => {
+        const container = document.getElementById('svgContainer');
+        container.innerHTML = svgContent;
+        const svgElement = container.querySelector('svg');
+        if (!svgElement) {
+          throw new Error('SVG element not found in loaded content');
+        }
+        svgElement.setAttribute('width', '100%');
+        svgElement.setAttribute('height', '100%');
+        svgElement.setAttribute('preserveAspectRatio', 'none');
+
+        const ellipse = svgElement.querySelector('#alaska');
+        if (!ellipse) {
+          throw new Error('Alaska ellipse not found');
+        }
+        ellipse.style.fill = 'blue'; // Highlight for visibility
+        const cx = parseFloat(ellipse.getAttribute('cx'));
+        const cy = parseFloat(ellipse.getAttribute('cy'));
+        const transform = ellipse.getAttribute('transform') || '';
+        let parentTransform = '';
+        const parentG = ellipse.closest('g');
+        if (parentG) {
+          parentTransform = parentG.getAttribute('transform') || '';
+        }
+        console.log(`Alaska: cx=${cx}, cy=${cy}, transform=${transform}, parentTransform=${parentTransform}`);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('id', 'alaska-text');
+        text.setAttribute('x', cx);
+        text.setAttribute('y', cy);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'middle');
+        text.setAttribute('font-size', '36');
+        text.setAttribute('font-family', 'Arial');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('fill', 'white');
+        text.textContent = '001';
+        svgElement.appendChild(text);
+
+        function updateOffset() {
+          const currentX = parseFloat(text.getAttribute('x'));
+          offsetX = currentX - cx;
+          document.getElementById('offset').textContent = offsetX.toFixed(2);
+          console.log(`OffsetX: ${offsetX}`);
+        }
+
+        text.addEventListener('mousedown', e => {
+          isDragging = true;
+          startX = e.clientX;
+          startTextX = parseFloat(text.getAttribute('x'));
+        });
+
+        document.addEventListener('mousemove', e => {
+          if (isDragging) {
+            const dx = e.clientX - startX;
+            const svgRect = svgElement.getBoundingClientRect();
+            const scaleX = svgRect.width / 1440; // widemap.svg width
+            const newX = startTextX + dx / scaleX;
+            text.setAttribute('x', newX);
+            updateOffset();
+          }
+        });
+
+        document.addEventListener('mouseup', () => {
+          isDragging = false;
+        });
+
+        updateOffset();
+      })
+      .catch(error => {
+        const container = document.getElementById('svgContainer');
+        container.innerHTML = `
+          <p class="error">Failed to load the map: ${error.message}. Check console for details.</p>
+          <p class="error">Ensure widemap.svg is in the project directory.</p>
+        `;
+        console.error('Error loading SVG:', error);
+      });
+  </script>
+</body>
+</html>
